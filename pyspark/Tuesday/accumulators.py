@@ -118,3 +118,5 @@ sales.foreach(sum_sales)
 
 print(f"Total sales: ${total_sales.value}")
 # Expected: $1627
+
+sc.stop()
