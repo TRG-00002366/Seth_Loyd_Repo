@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import string
 import re
 from pyspark import SparkContext
@@ -20,3 +21,30 @@ def remove_punctuation_rdd(text_line):
     clean_line = re.sub(r'[^\\w\\s]', '', text_line)
     # Optional: convert to lowercase and strip leading/trailing spaces
     return clean_line.lower().strip()
+=======
+def main():
+    from pyspark import SparkContext
+
+    sc = SparkContext("local[*]", "AccumulatorExercise")
+
+    # Create accumulator
+    record_counter = sc.accumulator(0)
+
+    # Sample data
+    data = sc.parallelize(range(1, 101))
+
+    # Count records using accumulator
+    def count_record(x):
+        record_counter.add(1)
+        return x
+
+    data.map(count_record).collect()
+
+    print(f"Records processed: {record_counter.value}")
+    # Expected: 100
+
+
+
+if __name__ == "__main__":
+    main()
+>>>>>>> 45dffacd18d7a780bf1f2d8418c97baec586bf33

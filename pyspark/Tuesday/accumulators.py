@@ -39,7 +39,7 @@ invalid_records = sc.accumulator(0)
 
 def validate_record(record):
     total_records.add(1)
-     parts = record.split(",")
+    parts = record.split(",")
     
     if len(parts) == 3 and all(parts):
         valid_records.add(1)
