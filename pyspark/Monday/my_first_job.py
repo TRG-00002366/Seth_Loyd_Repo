@@ -1,4 +1,4 @@
-from pyspark import sparksession
+from pyspark.SparkSession import SparkSession
 #covers both task 1 and 2 I belive
 def main():
     # Step 1: Create SparkSession
