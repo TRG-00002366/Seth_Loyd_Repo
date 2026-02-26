@@ -6,18 +6,43 @@ from pyspark import SparkContext
 lines = sc.textFile("Mini_Project_1/sherlock_holmes.txt")
 
 #T1
-normal = lines.lower()
-normal = normal.map(remove_punctuation_rdd)
+normal = normal.map(lambda line: re.sub(r'[^\w\s]', '', line.lower()))
 
 #T2
 tokenized = lines.flatmap(lambda x: x.split())
 
 #T3
-filtered = tokenized.filter(lambda x: x != "the" or x != "a" or x != "an" or x != "is")
+stopwords = set(["the","a","an","is","of","and","to","in","it"])
+broadcast_stopwords = sc.broadcast(stopwords)
+filtered_words = lines.filter(lambda w: w not in broadcast_stopwords.value)
 
-def remove_punctuation_rdd(text_line):
-    # Use regex to substitute any character that is NOT a word character (\w) or whitespace (\s)
-    # with an empty string. This effectively removes all punctuation.
-    clean_line = re.sub(r'[^\\w\\s]', '', text_line)
-    # Optional: convert to lowercase and strip leading/trailing spaces
-    return clean_line.lower().strip()
+#T4
+total_chars = lines.map(lambda line: len(line)).reduce(lambda a, b: a + b)
+
+#T5
+longest_line = lines.map(lambda line: (len(line), line)).reduce(lambda a, b: a if a[0] > b[0] else b)
+# longest_line[0] -> length, longest_line[1] -> text
+
+#T6
+watson_lines = lines.filter(lambda x: 'Watson' in x)
+
+#T7
+
+
+#T8
+
+
+#T9
+
+
+#T10
+
+
+#T11
+
+
+#T12
+
+
+
+
