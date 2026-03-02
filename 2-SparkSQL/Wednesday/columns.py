@@ -40,16 +40,31 @@ print("\n--- Task 1: String Cleaning ---")
 
 # TODO 1a: Clean product_name: trim whitespace, convert to title case
 # HINT: trim() removes whitespace, initcap() for title case
-
+inventory = inventory.withColumn(
+    "product_name",
+    initcap(trim(col("product_name")))
+)
 
 # TODO 1b: Standardize category to lowercase
-
+inventory = inventory.withColumn(
+    "category",
+    lower(col("category"))
+)
 
 # TODO 1c: Create a "product_code" column by:
 # - Taking first 3 letters of category (uppercase)
 # - Adding the product_id
 # - Example: "ELE-1" for Electronics product 1
+inventory = inventory.withColumn(
+    "product_code",
+    concat(
+        upper(substring(col("category"), 1, 3)),
+        lit("-"),
+        col("product_id")
+    )
+)
 
+inventory.show(truncate=False)
 
 # =============================================================================
 # TASK 2: Handling Nulls (15 mins)
@@ -58,13 +73,18 @@ print("\n--- Task 1: String Cleaning ---")
 print("\n--- Task 2: Handling Nulls ---")
 
 # TODO 2a: Replace null warehouse with "CENTRAL"
-
+inventory = inventory.fillna({"warehouse": "CENTRAL"})
 
 # TODO 2b: Replace null quantity with 0
-
+inventory = inventory.fillna({"quantity": 0})
 
 # TODO 2c: Create an "in_stock" boolean column (quantity > 0 or not null)
+inventory = inventory.withColumn(
+    "in_stock",
+    col("quantity") > 0
+)
 
+inventory.show()
 
 # =============================================================================
 # TASK 3: Calculated Columns (20 mins)
@@ -73,16 +93,30 @@ print("\n--- Task 2: Handling Nulls ---")
 print("\n--- Task 3: Calculated Columns ---")
 
 # TODO 3a: Add "inventory_value" = price * quantity (handle nulls!)
+inventory = inventory.withColumn(
+    "inventory_value",
+    col("price") * col("quantity")
+)
 
 
 # TODO 3b: Add "price_tier" based on price:
 # - "Budget" if price < 50
 # - "Mid" if 50 <= price < 200
 # - "Premium" if price >= 200
-
+inventory = inventory.withColumn(
+    "price_tier",
+    when(col("price") < 50, "Budget")
+    .when((col("price") >= 50) & (col("price") < 200), "Mid")
+    .otherwise("Premium")
+)
 
 # TODO 3c: Add "last_updated" column with today's date
+inventory = inventory.withColumn(
+    "last_updated",
+    current_date()
+)
 
+inventory.show()
 
 # =============================================================================
 # TASK 4: Removing and Renaming (10 mins)
@@ -91,12 +125,16 @@ print("\n--- Task 3: Calculated Columns ---")
 print("\n--- Task 4: Removing and Renaming ---")
 
 # TODO 4a: Drop the "warehouse" column
-
+inventory = inventory.drop("warehouse")
 
 # TODO 4b: Rename columns:
 # - product_id -> id
 # - product_name -> name
+inventory = (inventory
+             .withColumnRenamed("product_id", "id")
+             .withColumnRenamed("product_name", "name"))
 
+inventory.show()
 
 # =============================================================================
 # TASK 5: Complete Data Pipeline (25 mins)
@@ -115,9 +153,39 @@ print("\n--- Task 5: Complete Data Pipeline ---")
 # 8. Drop warehouse column
 # 9. Order columns: id, name, category, price, quantity, inventory_value, price_tier, last_updated
 
-clean_inventory = None  # Your pipeline here
+clean_inventory = (
+    inventory
+    # Clean name
+    .withColumn("product_name", initcap(trim(col("product_name"))))
+    # Standardize category
+    .withColumn("category", lower(col("category")))
+    # Fill nulls
+    .fillna({"warehouse": "CENTRAL", "quantity": 0})
+    # Inventory value
+    .withColumn("inventory_value", col("price") * col("quantity"))
+    # Price tier
+    .withColumn(
+        "price_tier",
+        when(col("price") < 50, "Budget")
+        .when((col("price") >= 50) & (col("price") < 200), "Mid")
+        .otherwise("Premium")
+    )
+    # Date column
+    .withColumn("last_updated", current_date())
+    # Rename
+    .withColumnRenamed("product_id", "id")
+    .withColumnRenamed("product_name", "name")
+    # Drop warehouse
+    .drop("warehouse")
+    # Reorder columns
+    .select(
+        "id", "name", "category", "price",
+        "quantity", "inventory_value",
+        "price_tier", "last_updated"
+    )
+)
 
-# clean_inventory.show()
+clean_inventory.show()
 
 
 # =============================================================================
@@ -134,13 +202,24 @@ descriptions = spark.createDataFrame([
 ], ["description"])
 
 # TODO 6a: Extract just the product name (before the dash)
-
+descriptions = descriptions.withColumn(
+    "product_name",
+    trim(split(col("description"), "-")[0])
+)
 
 # TODO 6b: Extract the size value
-
+descriptions = descriptions.withColumn(
+    "size",
+    regexp_extract(col("description"), "Size: ([^,]+)", 1)
+)
 
 # TODO 6c: Extract the color value
+descriptions = descriptions.withColumn(
+    "color",
+    regexp_extract(col("description"), "Color: (.+)", 1)
+)
 
+descriptions.show(truncate=False)
 
 # =============================================================================
 # CLEANUP
