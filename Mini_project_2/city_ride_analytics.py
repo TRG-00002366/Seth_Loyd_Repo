@@ -31,6 +31,31 @@ rides.withColumnRenamed("pickup_location","start_area")\
     .show()
 
 #T8
+rides.groupBy("ride_type").agg(
+    sum("fare_amount")
+).show()
+
+#T9
+rides.groupBy("driver_id").agg(
+    avg("rating")
+).show()
+
+#T10
+joined = rides.join(drivers, rides.driver_id == drivers.driver_id)
+joined.show()
+
+#T11
+peak = rides.filter(col("ride_date") >= "2025-01-01")
+off_peak = rides.filter(col("ride_date") >= "2025-02-01")
+df = peak.union(off_peak)
+df.show()
+
+#T12
+rides.createOrReplaceTempView("ride_table")
+result = spark.sql("SELECT fare_amount FROM ride_table ORDER BY fare_amount desc limit 3").show()
+print(result)
+
+#O1
 
 
 spark.stop()
