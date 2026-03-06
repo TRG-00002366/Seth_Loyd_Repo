@@ -56,6 +56,40 @@ result = spark.sql("SELECT fare_amount FROM ride_table ORDER BY fare_amount desc
 print(result)
 
 #O1
+sorted_rides_df = rides.orderBy(
+    col("fare_amount").desc(),
+    col("distance_miles").asc()
+)
 
+sorted_rides_df.show()
+
+#O2
+null_count = rides.filter(col("rating").isNull()).count()
+print("Number of rides with null rating:", null_count)
+rides = rides.fillna({"rating": 0.0})
+rides.show()
+
+#O3
+rides = rides.withColumn(
+    "ride_category",
+    when(col("distance_miles") < 3, "short")
+    .when((col("distance_miles") >= 3) & (col("distance_miles") <= 8), "medium")
+    .otherwise("long")
+)
+rides.show()
+
+#O4
+enriched_df = rides.join(drivers, on="driver_id", how="inner")
+window_spec = Window.partitionBy("driver_id").orderBy("ride_date")
+
+enriched_df = enriched_df.withColumn(
+    "running_revenue",
+    sum("fare_amount").over(window_spec)
+)
+enriched_df.show()
+
+#O5
+enriched_df.write.mode("overwrite").parquet("Ride_Analytics_Results/enriched_rides")
+driver_revenue_df.write.mode("overwrite").option("header", True).csv("Ride_Analytics_Results/driver_revenue")
 
 spark.stop()
